@@ -50,7 +50,7 @@ applications:
       gui-x: '-450'
       gui-y: '259'
   katib-db:
-    charm: cs:~charmed-osm/mariadb-k8s
+    charm: cs:~charmed-osm/mariadb-k8s-33
     scale: 1
     options:
       database: katib
@@ -100,7 +100,7 @@ applications:
       gui-x: '-300'
       gui-y: '-518'
   metadata-db:
-    charm: cs:~charmed-osm/mariadb-k8s
+    charm: cs:~charmed-osm/mariadb-k8s-33
     scale: 1
     annotations:
       gui-x: '-600'
@@ -148,7 +148,7 @@ applications:
       gui-x: '300'
       gui-y: '518'
   pipelines-db:
-    charm: cs:~charmed-osm/mariadb-k8s
+    charm: cs:~charmed-osm/mariadb-k8s-33
     scale: 1
     annotations:
       gui-x: '0'

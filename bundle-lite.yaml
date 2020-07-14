@@ -71,7 +71,7 @@ applications:
       gui-x: '0'
       gui-y: '0'
   pipelines-db:
-    charm: cs:~charmed-osm/mariadb-k8s
+    charm: cs:~charmed-osm/mariadb-k8s-33
     scale: 1
     annotations:
       gui-x: '-450'
