@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        juju: [2.7/stable, 2.8/stable]
+        juju: [2.7/stable, 2.8/edge]
         microk8s: [stable, edge]
         bundle: [lite, edge]
     steps:
@@ -64,7 +64,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        juju: [2.7/stable, 2.8/stable]
+        juju: [2.7/stable, 2.8/edge]
         microk8s: [stable, edge]
     steps:
     - name: Check out code
