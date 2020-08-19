@@ -3,108 +3,137 @@
 import pytest
 import yaml
 from sh import Command
+from functools import reduce
 
 kubectl = Command('juju-kubectl')
 
 
+def dedupe(statuses):
+    """Handles building a dict from a list of units.
+
+    Workaround for Juju 2.8 behavior: https://bugs.launchpad.net/juju/+bug/1892285
+
+    Conversion process:
+
+        # Start
+        {'argo-controller/0': 'Running', 'argo-controller/1': 'Succeeded'}
+        # Post-reduce
+        {'argo-controller': (0, 'Running')}
+        # Post-map
+        {'argo-controller': 'Running'}
+    """
+
+    def reducer(memo, item):
+        name, value = item
+        unit, num = name.split('/')
+        num = int(num)
+        value = (num, value)
+        if unit in memo:
+            if memo[unit][0] > num:
+                memo[unit] = value
+        else:
+            memo[unit] = value
+        return memo
+
+    statuses = reduce(reducer, statuses, {})
+    return {x[0]: x[1][1] for x in sorted(statuses.items())}
+
+
 @pytest.mark.full
 def test_running_full():
-    pods = yaml.safe_load(kubectl.get('pods', '-oyaml').stdout)
+    pods = yaml.safe_load(kubectl.get('pods', '-ljuju-app', '-oyaml').stdout)
 
     statuses = sorted(
-        (i['metadata']['labels']['juju-app'], i['status']['phase'])
+        (i['metadata']['annotations']['juju.io/unit'], i['status']['phase'])
         for i in pods['items']
-        if 'juju-app' in i['metadata']['labels']
     )
 
-    assert statuses == [
-        ('ambassador', 'Running'),
-        ('argo-controller', 'Running'),
-        ('argo-ui', 'Running'),
-        ('dex-auth', 'Running'),
-        ('jupyter-controller', 'Running'),
-        ('jupyter-web', 'Running'),
-        ('katib-controller', 'Running'),
-        ('katib-db', 'Running'),
-        ('katib-db-manager', 'Running'),
-        ('katib-ui', 'Running'),
-        ('kubeflow-dashboard', 'Running'),
-        ('kubeflow-profiles', 'Running'),
-        ('metacontroller', 'Running'),
-        ('metadata-api', 'Running'),
-        ('metadata-db', 'Running'),
-        ('metadata-envoy', 'Running'),
-        ('metadata-grpc', 'Running'),
-        ('metadata-ui', 'Running'),
-        ('minio', 'Running'),
-        ('oidc-gatekeeper', 'Running'),
-        ('pipelines-api', 'Running'),
-        ('pipelines-db', 'Running'),
-        ('pipelines-persistence', 'Running'),
-        ('pipelines-scheduledworkflow', 'Running'),
-        ('pipelines-ui', 'Running'),
-        ('pipelines-viewer', 'Running'),
-        ('pipelines-visualization', 'Running'),
-        ('pytorch-operator', 'Running'),
-        ('seldon-core', 'Running'),
-        ('tf-job-operator', 'Running'),
-    ]
+    assert dedupe(statuses) == {
+        'ambassador': 'Running',
+        'argo-controller': 'Running',
+        'argo-ui': 'Running',
+        'dex-auth': 'Running',
+        'jupyter-controller': 'Running',
+        'jupyter-web': 'Running',
+        'katib-controller': 'Running',
+        'katib-db': 'Running',
+        'katib-db-manager': 'Running',
+        'katib-ui': 'Running',
+        'kubeflow-dashboard': 'Running',
+        'kubeflow-profiles': 'Running',
+        'metacontroller': 'Running',
+        'metadata-api': 'Running',
+        'metadata-db': 'Running',
+        'metadata-envoy': 'Running',
+        'metadata-grpc': 'Running',
+        'metadata-ui': 'Running',
+        'minio': 'Running',
+        'oidc-gatekeeper': 'Running',
+        'pipelines-api': 'Running',
+        'pipelines-db': 'Running',
+        'pipelines-persistence': 'Running',
+        'pipelines-scheduledworkflow': 'Running',
+        'pipelines-ui': 'Running',
+        'pipelines-viewer': 'Running',
+        'pipelines-visualization': 'Running',
+        'pytorch-operator': 'Running',
+        'seldon-core': 'Running',
+        'tf-job-operator': 'Running',
+    }
 
 
 @pytest.mark.lite
 def test_running_lite():
-    pods = yaml.safe_load(kubectl.get('pods', '-oyaml').stdout)
+    pods = yaml.safe_load(kubectl.get('pods', '-ljuju-app', '-oyaml').stdout)
 
     statuses = sorted(
-        (i['metadata']['labels']['juju-app'], i['status']['phase'])
+        (i['metadata']['annotations']['juju.io/unit'], i['status']['phase'])
         for i in pods['items']
-        if 'juju-app' in i['metadata']['labels']
     )
 
-    assert statuses == [
-        ('ambassador', 'Running'),
-        ('argo-controller', 'Running'),
-        ('dex-auth', 'Running'),
-        ('jupyter-controller', 'Running'),
-        ('jupyter-web', 'Running'),
-        ('kubeflow-dashboard', 'Running'),
-        ('kubeflow-profiles', 'Running'),
-        ('minio', 'Running'),
-        ('oidc-gatekeeper', 'Running'),
-        ('pipelines-api', 'Running'),
-        ('pipelines-db', 'Running'),
-        ('pipelines-persistence', 'Running'),
-        ('pipelines-scheduledworkflow', 'Running'),
-        ('pipelines-ui', 'Running'),
-        ('pipelines-viewer', 'Running'),
-        ('pipelines-visualization', 'Running'),
-        ('pytorch-operator', 'Running'),
-        ('seldon-core', 'Running'),
-        ('tf-job-operator', 'Running'),
-    ]
+    assert dedupe(statuses) == {
+        'ambassador': 'Running',
+        'argo-controller': 'Running',
+        'dex-auth': 'Running',
+        'jupyter-controller': 'Running',
+        'jupyter-web': 'Running',
+        'kubeflow-dashboard': 'Running',
+        'kubeflow-profiles': 'Running',
+        'minio': 'Running',
+        'oidc-gatekeeper': 'Running',
+        'pipelines-api': 'Running',
+        'pipelines-db': 'Running',
+        'pipelines-persistence': 'Running',
+        'pipelines-scheduledworkflow': 'Running',
+        'pipelines-ui': 'Running',
+        'pipelines-viewer': 'Running',
+        'pipelines-visualization': 'Running',
+        'pytorch-operator': 'Running',
+        'seldon-core': 'Running',
+        'tf-job-operator': 'Running',
+    }
 
 
 @pytest.mark.edge
 def test_running_edge():
-    pods = yaml.safe_load(kubectl.get('pods', '-oyaml').stdout)
+    pods = yaml.safe_load(kubectl.get('pods', '-ljuju-app', '-oyaml').stdout)
 
     statuses = sorted(
-        (i['metadata']['labels']['juju-app'], i['status']['phase'])
+        (i['metadata']['annotations']['juju.io/unit'], i['status']['phase'])
         for i in pods['items']
-        if 'juju-app' in i['metadata']['labels']
     )
 
-    assert statuses == [
-        ('argo-controller', 'Running'),
-        ('minio', 'Running'),
-        ('pipelines-api', 'Running'),
-        ('pipelines-db', 'Running'),
-        ('pipelines-persistence', 'Running'),
-        ('pipelines-scheduledworkflow', 'Running'),
-        ('pytorch-operator', 'Running'),
-        ('seldon-core', 'Running'),
-        ('tf-job-operator', 'Running'),
-    ]
+    assert dedupe(statuses) == {
+        'argo-controller': 'Running',
+        'minio': 'Running',
+        'pipelines-api': 'Running',
+        'pipelines-db': 'Running',
+        'pipelines-persistence': 'Running',
+        'pipelines-scheduledworkflow': 'Running',
+        'pytorch-operator': 'Running',
+        'seldon-core': 'Running',
+        'tf-job-operator': 'Running',
+    }
 
 
 @pytest.mark.full
