@@ -37,6 +37,7 @@ def update_relation():
 @when_any("layer.docker-resource.oci-image.changed", "config.changed")
 def update_image():
     clear_flag("charm.started")
+    clear_flag("layer.docker-resource.oci-image.available")
 
 
 @when("layer.docker-resource.oci-image.available", "oidc-client.available")
