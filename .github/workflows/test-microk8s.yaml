@@ -54,6 +54,11 @@ jobs:
         set -eux
         sudo microk8s.kubectl get pods -A
         sudo juju status
+        sudo juju debug-log --no-tail --replay
+        sudo microk8s.kubectl logs --tail 100 -l juju-app=argo-controller
+        sudo microk8s.kubectl logs --tail 100 -l juju-operator=argo-controller
+        sudo microk8s.kubectl logs --tail 100 -l juju-app=pipelines-api
+        sudo microk8s.kubectl logs --tail 100 -l juju-operator=pipelines-api
         sudo ./tests/dump-pipeline-logs.sh
       if: failure()
 
